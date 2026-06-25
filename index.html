@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>넥씨오 3기 후기</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    .ticker-outer {
+      width: 100%;
+      overflow: hidden;
+      padding: 24px 0;
+    }
+
+    .ticker-track {
+      display: flex;
+      gap: 14px;
+      width: max-content;
+      animation: ticker 28s linear infinite;
+    }
+
+    .ticker-track:hover {
+      animation-play-state: paused;
+    }
+
+    @keyframes ticker {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    .ticker-track img {
+      height: 420px;
+      width: auto;
+      border-radius: 10px;
+      display: block;
+      flex-shrink: 0;
+      object-fit: contain;
+    }
+
+    .control-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 50px;
+      height: 50px;
+      background: #333;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      transition: background 0.2s;
+      z-index: 100;
+    }
+
+    .control-btn:hover {
+      background: #555;
+    }
+
+    @media (max-width: 600px) {
+      .ticker-track img { height: 240px; }
+      .ticker-track { gap: 10px; }
+      .control-btn { bottom: 16px; right: 16px; width: 44px; height: 44px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="ticker-outer">
+  <div class="ticker-track" id="track"></div>
+</div>
+
+<button class="control-btn" id="toggleBtn" title="재생/멈춤">▶️</button>
+
+<script>
+  const folder = "images/" + encodeURIComponent("넥씨오 클럽 후기");
+  const files = [
+    "KakaoTalk_20260625_133616314.jpg",
+    "KakaoTalk_20260625_133652540.jpg",
+    "KakaoTalk_20260625_133856709.jpg",
+    "KakaoTalk_20260625_133856709_01.jpg",
+    "KakaoTalk_20260625_134028018.jpg",
+    "KakaoTalk_20260625_134028018_01.jpg",
+    "KakaoTalk_20260625_134028018_02.jpg",
+    "KakaoTalk_20260625_145140195.jpg",
+    "KakaoTalk_20260625_145337811.jpg",
+    "KakaoTalk_20260625_150848970.jpg",
+    "KakaoTalk_20260625_150926929.jpg",
+    "KakaoTalk_20260625_150941320.jpg",
+  ];
+
+  const track = document.getElementById("track");
+  const toggleBtn = document.getElementById("toggleBtn");
+
+  let isPlaying = true;
+
+  // 두 세트를 이어붙여 끊김 없는 루프 구현
+  [files, files].forEach(set => {
+    set.forEach(name => {
+      const img = document.createElement("img");
+      img.src = `${folder}/${name}`;
+      img.alt = "";
+      img.loading = "eager";
+      track.appendChild(img);
+    });
+  });
+
+  toggleBtn.addEventListener("click", () => {
+    isPlaying = !isPlaying;
+    if (isPlaying) {
+      track.style.animationPlayState = "running";
+      toggleBtn.textContent = "⏸️";
+    } else {
+      track.style.animationPlayState = "paused";
+      toggleBtn.textContent = "▶️";
+    }
+  });
+</script>
+
+</body>
+</html>

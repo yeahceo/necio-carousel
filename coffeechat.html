@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>넥씨오 3기 커피챗</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body { height: 100%; }
+
+    body {
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .ticker-outer {
+      width: 100%;
+      overflow-x: hidden;
+      padding: 12px 0;
+    }
+
+    .ticker-track {
+      display: flex;
+      gap: 14px;
+      width: max-content;
+      animation: ticker 28s linear infinite;
+    }
+
+    .ticker-track:hover {
+      animation-play-state: paused;
+    }
+
+    @keyframes ticker {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    .ticker-track img {
+      height: 88vh;
+      max-height: 460px;
+      width: auto;
+      border-radius: 10px;
+      display: block;
+      flex-shrink: 0;
+      object-fit: contain;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .ticker-track img:active { transform: scale(1.05); }
+
+    .btn-group {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      gap: 10px;
+      z-index: 100;
+    }
+
+    .control-btn {
+      width: 50px;
+      height: 50px;
+      background: rgba(0,0,0,0.08);
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transition: background 0.2s;
+      filter: grayscale(100%) brightness(0.5);
+    }
+
+    .control-btn:hover { background: rgba(0,0,0,0.12); }
+    .control-btn.active { background: rgba(0,0,0,0.18); }
+
+    /* Lightbox */
+    .lightbox {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.9);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.2s;
+    }
+
+    .lightbox.active { display: flex; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    .lightbox img {
+      max-width: 95%;
+      max-height: 95%;
+      object-fit: contain;
+    }
+
+    .lightbox-close {
+      position: absolute;
+      top: 16px; right: 16px;
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 40px; height: 40px;
+      font-size: 24px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .lightbox-close:hover { background: rgba(255,255,255,0.4); }
+
+    @media (max-width: 600px) {
+      .ticker-track img { max-height: 300px; }
+      .ticker-track { gap: 10px; }
+      .btn-group { bottom: 16px; right: 16px; gap: 8px; }
+      .control-btn { width: 40px; height: 40px; font-size: 16px; }
+      .lightbox-close { width: 36px; height: 36px; font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="ticker-outer">
+  <div class="ticker-track" id="track"></div>
+</div>
+
+<div class="btn-group">
+  <button class="control-btn" id="fastBtn" title="빠르게">⏩</button>
+  <button class="control-btn" id="toggleBtn" title="재생/멈춤">⏸️</button>
+</div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" id="lightboxClose">✕</button>
+  <img id="lightboxImg" src="" alt="">
+</div>
+
+<script>
+  const folder = "images/" + encodeURIComponent("커피챗");
+  const files = [
+    "KakaoTalk_20260625_134100354.jpg",
+    "KakaoTalk_20260625_134338841.jpg",
+    "KakaoTalk_20260625_134402177.jpg",
+    "KakaoTalk_20260625_134417834.jpg",
+    "KakaoTalk_20260625_135828034.jpg",
+    "KakaoTalk_20260625_140300544.jpg",
+    "KakaoTalk_20260625_140405256.jpg",
+    "KakaoTalk_20260625_145445030.jpg",
+    "KakaoTalk_20260625_145602753.jpg",
+    "KakaoTalk_20260625_145632665.jpg",
+    "KakaoTalk_20260625_150718222.jpg",
+    "KakaoTalk_20260625_150724834.jpg",
+    "KakaoTalk_20260625_150805318.jpg",
+    "KakaoTalk_20260625_150814990.jpg",
+  ];
+
+  const track = document.getElementById("track");
+  const toggleBtn = document.getElementById("toggleBtn");
+  const fastBtn = document.getElementById("fastBtn");
+  const lightbox = document.getElementById("lightbox");
+  const lightboxImg = document.getElementById("lightboxImg");
+  const lightboxClose = document.getElementById("lightboxClose");
+
+  const NORMAL_SPEED = 28;
+  const FAST_SPEED = 6;
+  let isPlaying = true;
+  let isFast = false;
+
+  [files, files].forEach(set => {
+    set.forEach(name => {
+      const img = document.createElement("img");
+      img.src = `${folder}/${name}`;
+      img.alt = "";
+      img.loading = "eager";
+      img.addEventListener("click", () => openLightbox(img.src));
+      track.appendChild(img);
+    });
+  });
+
+  function changeSpeed(newDuration) {
+    const transformStr = getComputedStyle(track).transform;
+    const currentX = transformStr === 'none' ? 0 : new DOMMatrix(transformStr).m41;
+    const halfWidth = track.offsetWidth / 2;
+    const progress = Math.abs(currentX) / halfWidth;
+    const delay = -(newDuration * progress);
+
+    track.style.animation = 'none';
+    track.getBoundingClientRect();
+    track.style.animation = `ticker ${newDuration}s linear ${delay}s infinite`;
+
+    if (!isPlaying) track.style.animationPlayState = 'paused';
+  }
+
+  function openLightbox(src) {
+    lightboxImg.src = src;
+    lightbox.classList.add("active");
+    track.style.animationPlayState = "paused";
+  }
+
+  function closeLightbox() {
+    lightbox.classList.remove("active");
+    if (isPlaying) track.style.animationPlayState = "running";
+  }
+
+  lightboxClose.addEventListener("click", closeLightbox);
+  lightbox.addEventListener("click", (e) => {
+    if (e.target === lightbox) closeLightbox();
+  });
+
+  toggleBtn.addEventListener("click", () => {
+    isPlaying = !isPlaying;
+    track.style.animationPlayState = isPlaying ? "running" : "paused";
+    toggleBtn.textContent = isPlaying ? "⏸️" : "▶️";
+  });
+
+  fastBtn.addEventListener("click", () => {
+    isFast = !isFast;
+    changeSpeed(isFast ? FAST_SPEED : NORMAL_SPEED);
+    fastBtn.classList.toggle("active", isFast);
+  });
+</script>
+
+</body>
+</html>

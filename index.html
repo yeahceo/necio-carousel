@@ -195,8 +195,8 @@
   const lightboxImg = document.getElementById("lightboxImg");
   const lightboxClose = document.getElementById("lightboxClose");
 
-  const NORMAL_SPEED = "28s";
-  const FAST_SPEED = "6s";
+  const NORMAL_SPEED = 28;
+  const FAST_SPEED = 6;
   let isPlaying = true;
   let isFast = false;
 
@@ -230,6 +230,22 @@
   });
 
   // 재생/멈춤 버튼
+  function changeSpeed(newDuration) {
+    // 현재 위치를 픽셀로 읽기
+    const transformStr = getComputedStyle(track).transform;
+    const currentX = transformStr === 'none' ? 0 : new DOMMatrix(transformStr).m41;
+    const halfWidth = track.offsetWidth / 2;
+    const progress = Math.abs(currentX) / halfWidth; // 0~1
+    const delay = -(newDuration * progress);
+
+    // 애니메이션 제거 후 현재 위치부터 재시작
+    track.style.animation = 'none';
+    track.getBoundingClientRect(); // 강제 reflow
+    track.style.animation = `ticker ${newDuration}s linear ${delay}s infinite`;
+
+    if (!isPlaying) track.style.animationPlayState = 'paused';
+  }
+
   toggleBtn.addEventListener("click", () => {
     isPlaying = !isPlaying;
     track.style.animationPlayState = isPlaying ? "running" : "paused";
@@ -238,7 +254,7 @@
 
   fastBtn.addEventListener("click", () => {
     isFast = !isFast;
-    track.style.animationDuration = isFast ? FAST_SPEED : NORMAL_SPEED;
+    changeSpeed(isFast ? FAST_SPEED : NORMAL_SPEED);
     fastBtn.classList.toggle("active", isFast);
   });
 </script>

@@ -57,10 +57,16 @@
       transform: scale(1.05);
     }
 
-    .control-btn {
+    .btn-group {
       position: fixed;
       bottom: 24px;
       right: 24px;
+      display: flex;
+      gap: 10px;
+      z-index: 100;
+    }
+
+    .control-btn {
       width: 50px;
       height: 50px;
       background: rgba(0,0,0,0.08);
@@ -73,12 +79,20 @@
       justify-content: center;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       transition: background 0.2s;
-      z-index: 100;
       filter: grayscale(100%) brightness(0.5);
     }
 
     .control-btn:hover {
       background: rgba(0,0,0,0.12);
+    }
+
+    .control-btn.active {
+      background: rgba(0,0,0,0.18);
+    }
+
+    @media (max-width: 600px) {
+      .btn-group { bottom: 16px; right: 16px; gap: 8px; }
+      .control-btn { width: 40px; height: 40px; font-size: 16px; }
     }
 
     /* Lightbox Modal */
@@ -136,7 +150,6 @@
     @media (max-width: 600px) {
       .ticker-track img { max-height: 300px; }
       .ticker-track { gap: 10px; }
-      .control-btn { bottom: 16px; right: 16px; width: 44px; height: 44px; }
       .lightbox-close { width: 36px; height: 36px; font-size: 20px; }
     }
   </style>
@@ -147,7 +160,10 @@
   <div class="ticker-track" id="track"></div>
 </div>
 
-<button class="control-btn" id="toggleBtn" title="재생/멈춤">▶️</button>
+<div class="btn-group">
+  <button class="control-btn" id="fastBtn" title="빠르게">⏩</button>
+  <button class="control-btn" id="toggleBtn" title="재생/멈춤">⏸️</button>
+</div>
 
 <div class="lightbox" id="lightbox">
   <button class="lightbox-close" id="lightboxClose">✕</button>
@@ -165,7 +181,6 @@
     "KakaoTalk_20260625_134028018_01.jpg",
     "KakaoTalk_20260625_134028018_02.jpg",
     "KakaoTalk_20260625_145140195.jpg",
-    "KakaoTalk_20260625_145337811.jpg",
     "KakaoTalk_20260625_150848970.jpg",
     "KakaoTalk_20260625_150926929.jpg",
     "KakaoTalk_20260625_150941320.jpg",
@@ -175,11 +190,15 @@
 
   const track = document.getElementById("track");
   const toggleBtn = document.getElementById("toggleBtn");
+  const fastBtn = document.getElementById("fastBtn");
   const lightbox = document.getElementById("lightbox");
   const lightboxImg = document.getElementById("lightboxImg");
   const lightboxClose = document.getElementById("lightboxClose");
 
+  const NORMAL_SPEED = "28s";
+  const FAST_SPEED = "6s";
   let isPlaying = true;
+  let isFast = false;
 
   // 두 세트를 이어붙여 끊김 없는 루프 구현
   [files, files].forEach(set => {
@@ -213,13 +232,14 @@
   // 재생/멈춤 버튼
   toggleBtn.addEventListener("click", () => {
     isPlaying = !isPlaying;
-    if (isPlaying) {
-      track.style.animationPlayState = "running";
-      toggleBtn.textContent = "⏸️";
-    } else {
-      track.style.animationPlayState = "paused";
-      toggleBtn.textContent = "▶️";
-    }
+    track.style.animationPlayState = isPlaying ? "running" : "paused";
+    toggleBtn.textContent = isPlaying ? "⏸️" : "▶️";
+  });
+
+  fastBtn.addEventListener("click", () => {
+    isFast = !isFast;
+    track.style.animationDuration = isFast ? FAST_SPEED : NORMAL_SPEED;
+    fastBtn.classList.toggle("active", isFast);
   });
 </script>
 

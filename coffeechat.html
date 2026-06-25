@@ -27,16 +27,7 @@
       display: flex;
       gap: 14px;
       width: max-content;
-      animation: ticker 28s linear infinite;
-    }
-
-    .ticker-track:hover {
-      animation-play-state: paused;
-    }
-
-    @keyframes ticker {
-      0%   { transform: translateX(0); }
-      100% { transform: translateX(-50%); }
+      will-change: transform;
     }
 
     .ticker-track img {
@@ -176,10 +167,16 @@
   const lightboxImg = document.getElementById("lightboxImg");
   const lightboxClose = document.getElementById("lightboxClose");
 
-  const NORMAL_SPEED = 28;
-  const FAST_SPEED = 6;
+  const BASE_SPEED = 2.2;   // 기본 px/frame
+  const FAST_SPEED = 9;     // 빠른 모드 px/frame
+  const MIN_FACTOR = 0.15;  // 가운데 정중앙일 때 최소 속도 비율
+  const SLOW_RADIUS = 180;  // 이 반경(px) 안에 들어오면 감속 시작
+
+  let offset = 0;
+  let halfWidth = 0;
   let isPlaying = true;
   let isFast = false;
+  let isLightboxOpen = false;
 
   [files, files].forEach(set => {
     set.forEach(name => {
@@ -192,29 +189,48 @@
     });
   });
 
-  function changeSpeed(newDuration) {
-    const transformStr = getComputedStyle(track).transform;
-    const currentX = transformStr === 'none' ? 0 : new DOMMatrix(transformStr).m41;
-    const halfWidth = track.offsetWidth / 2;
-    const progress = Math.abs(currentX) / halfWidth;
-    const delay = -(newDuration * progress);
+  // 이미지 로드 후 halfWidth 측정
+  window.addEventListener("load", () => {
+    halfWidth = track.scrollWidth / 2;
+    requestAnimationFrame(animate);
+  });
 
-    track.style.animation = 'none';
-    track.getBoundingClientRect();
-    track.style.animation = `ticker ${newDuration}s linear ${delay}s infinite`;
+  function getSpeedFactor() {
+    const viewCenter = window.innerWidth / 2;
+    let minDist = Infinity;
 
-    if (!isPlaying) track.style.animationPlayState = 'paused';
+    track.querySelectorAll("img").forEach(img => {
+      const rect = img.getBoundingClientRect();
+      const imgCenter = rect.left + rect.width / 2;
+      const dist = Math.abs(imgCenter - viewCenter);
+      if (dist < minDist) minDist = dist;
+    });
+
+    // smoothstep: 가운데 가까울수록 느리게
+    const t = Math.min(minDist / SLOW_RADIUS, 1);
+    const smooth = t * t * (3 - 2 * t);
+    return MIN_FACTOR + (1 - MIN_FACTOR) * smooth;
+  }
+
+  function animate() {
+    if (isPlaying && !isLightboxOpen && halfWidth > 0) {
+      const speed = isFast ? FAST_SPEED : BASE_SPEED * getSpeedFactor();
+      offset += speed;
+      if (offset >= halfWidth) offset -= halfWidth;
+      track.style.transform = `translateX(${-offset}px)`;
+    }
+    requestAnimationFrame(animate);
   }
 
   function openLightbox(src) {
     lightboxImg.src = src;
     lightbox.classList.add("active");
-    track.style.animationPlayState = "paused";
+    isLightboxOpen = true;
   }
 
   function closeLightbox() {
     lightbox.classList.remove("active");
-    if (isPlaying) track.style.animationPlayState = "running";
+    isLightboxOpen = false;
   }
 
   lightboxClose.addEventListener("click", closeLightbox);
@@ -224,13 +240,11 @@
 
   toggleBtn.addEventListener("click", () => {
     isPlaying = !isPlaying;
-    track.style.animationPlayState = isPlaying ? "running" : "paused";
     toggleBtn.textContent = isPlaying ? "⏸️" : "▶️";
   });
 
   fastBtn.addEventListener("click", () => {
     isFast = !isFast;
-    changeSpeed(isFast ? FAST_SPEED : NORMAL_SPEED);
     fastBtn.classList.toggle("active", isFast);
   });
 </script>
